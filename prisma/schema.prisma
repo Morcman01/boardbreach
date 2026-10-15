@@ -1,0 +1,117 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum TeamRole {
+  OWNER
+  ADMIN
+  MEMBER
+  GUEST
+}
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  DONE
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  createdAt    DateTime @default(now())
+
+  ownedTeams      Team[]        @relation("TeamOwner")
+  teamMemberships TeamMember[]
+  assignedTasks   Task[]        @relation("TaskAssignee")
+  createdTasks    Task[]        @relation("TaskCreator")
+  comments        Comment[]
+  attachments     Attachment[]
+}
+
+model Team {
+  id      String @id @default(cuid())
+  name    String
+  ownerId String
+  owner   User   @relation("TeamOwner", fields: [ownerId], references: [id])
+
+  members TeamMember[]
+  boards  Board[]
+
+  createdAt DateTime @default(now())
+}
+
+model TeamMember {
+  id     String   @id @default(cuid())
+  userId String
+  teamId String
+  role   TeamRole @default(MEMBER)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, teamId])
+}
+
+model Board {
+  id     String @id @default(cuid())
+  teamId String
+  title  String
+
+  team  Team   @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  tasks Task[]
+
+  createdAt DateTime @default(now())
+}
+
+model Task {
+  id          String     @id @default(cuid())
+  boardId     String
+  title       String
+  description String?
+  status      TaskStatus @default(TODO)
+
+  assigneeId String?
+  assignee   User?   @relation("TaskAssignee", fields: [assigneeId], references: [id])
+
+  createdById String
+  createdBy   User   @relation("TaskCreator", fields: [createdById], references: [id])
+
+  board Board @relation(fields: [boardId], references: [id], onDelete: Cascade)
+
+  comments    Comment[]
+  attachments Attachment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Comment {
+  id     String @id @default(cuid())
+  taskId String
+  userId String
+  body   String
+
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+}
+
+model Attachment {
+  id           String @id @default(cuid())
+  taskId       String
+  filePath     String
+  uploadedById String
+
+  task       Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  uploadedBy User @relation(fields: [uploadedById], references: [id])
+
+  createdAt DateTime @default(now())
+}
