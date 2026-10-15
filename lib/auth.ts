@@ -32,3 +32,13 @@ export async function getTeamMembership(userId: string, teamId: string){
         },
     });
 }
+
+export async function getBoardAccess(userId: string, boardId: string){
+    const board = await prisma.board.findUnique({where: {id:boardId}});
+    if(!board) return null;
+
+    const membership = await getTeamMembership(userId, board.teamId);
+    if(!membership) return null;
+
+    return{board, membership};
+}
