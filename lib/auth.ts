@@ -42,3 +42,13 @@ export async function getBoardAccess(userId: string, boardId: string){
 
     return{board, membership};
 }
+
+export async function getTaskAccess(userId: string, taskId: string) {
+  const task = await prisma.task.findUnique({ where: { id: taskId } });
+  if (!task) return null;
+
+  const access = await getBoardAccess(userId, task.boardId);
+  if (!access) return null;
+
+  return { task, ...access };
+}

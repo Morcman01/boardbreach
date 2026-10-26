@@ -19,6 +19,16 @@ curl -i -X POST http://localhost:3000/api/auth/login \
   -d '{"email":"test@example.com","password":"testpass123"}' \
   -c cookies.txt
 
+curl -i -X POST http://localhost:3000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"test2@example.com","password":"testpass321"}' \
+  -c cookies2.txt
+
+curl -i -X POST http://localhost:3000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"outsider@example.com","password":"testpass123"}' \
+  -c cookies3.txt
+
 
 
 --- TEAMS ---
