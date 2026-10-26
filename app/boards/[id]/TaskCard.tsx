@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 export type TaskCardData = {
@@ -7,42 +8,65 @@ export type TaskCardData = {
   title: string;
   description: string | null;
   status: "TODO" | "IN_PROGRESS" | "DONE";
-  assigneeName: string | null;
+  assigneeId: string | null;
 };
+
+type Member = { id: string; name: string };
 
 export default function TaskCard({
   task,
+  members,
   canEdit,
+  canDelete,
 }: {
   task: TaskCardData;
+  members: Member[];
   canEdit: boolean;
+  canDelete: boolean;
 }) {
   const router = useRouter();
+  const [error, setError] = useState("");
 
-  async function changeStatus(newStatus: string) {
+  async function updateTask(data: object) {
+    setError("");
     const res = await fetch(`/api/tasks/${task.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status: newStatus }),
+      body: JSON.stringify(data),
     });
 
-    if (res.ok) {
-      router.refresh();
+    if (!res.ok) {
+      const body = await res.json();
+      setError(body.error ?? "update failed");
+      return;
     }
+    router.refresh();
+  }
+
+  async function deleteTask() {
+    if (!window.confirm(`Delete "${task.title}"?`)) return;
+
+    setError("");
+    const res = await fetch(`/api/tasks/${task.id}`, { method: "DELETE" });
+
+    if (!res.ok) {
+      const body = await res.json();
+      setError(body.error ?? "delete failed");
+      return;
+    }
+    router.refresh();
   }
 
   return (
-    <div className="border rounded p-3 bg-white space-y-2">
+    <div className="border rounded p-3 bg-white text-gray-900 space-y-2">
       <p className="font-medium">{task.title}</p>
       {task.description && (
         <p className="text-sm text-gray-600">{task.description}</p>
       )}
-      {task.assigneeName && (
-        <p className="text-xs text-gray-500">Assigned to {task.assigneeName}</p>
-      )}
+
       <select
         value={task.status}
-        onChange={(e) => changeStatus(e.target.value)}
+        onChange={(e) => updateTask({ status: e.target.value })}
         disabled={!canEdit}
         className="text-sm border rounded px-2 py-1 w-full disabled:opacity-50"
       >
@@ -50,6 +74,31 @@ export default function TaskCard({
         <option value="IN_PROGRESS">In progress</option>
         <option value="DONE">Done</option>
       </select>
+
+      <select
+        value={task.assigneeId ?? ""}
+        onChange={(e) => updateTask({ assigneeId: e.target.value || null })}
+        disabled={!canEdit}
+        className="text-sm border rounded px-2 py-1 w-full disabled:opacity-50"
+      >
+        <option value="">Unassigned</option>
+        {members.map((m) => (
+          <option key={m.id} value={m.id}>
+            {m.name}
+          </option>
+        ))}
+      </select>
+
+      {canDelete && (
+        <button
+          onClick={deleteTask}
+          className="text-xs text-red-600 hover:underline"
+        >
+          Delete
+        </button>
+      )}
+
+      {error && <p className="text-xs text-red-500">{error}</p>}
     </div>
   );
 }

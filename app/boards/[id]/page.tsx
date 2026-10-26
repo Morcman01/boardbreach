@@ -34,6 +34,18 @@ export default async function BoardPage({
     orderBy: { createdAt: "asc" },
   });
 
+  const members = await prisma.teamMember.findMany({
+    where: { teamId: access.board.teamId },
+    include: { user: { select: { id: true, name: true } } },
+  });
+
+  const memberOptions = members.map((m) => ({
+    id: m.user.id,
+    name: m.user.name,
+  }));
+
+  const isAdmin = ["OWNER", "ADMIN"].includes(access.membership.role);
+
   const canEdit = access.membership.role !== "GUEST";
 
   return (
@@ -63,16 +75,18 @@ export default async function BoardPage({
               ) : (
                 columnTasks.map((t) => (
                   <TaskCard
-                    key={t.id}
-                    canEdit={canEdit}
-                    task={{
-                      id: t.id,
-                      title: t.title,
-                      description: t.description,
-                      status: t.status,
-                      assigneeName: t.assignee?.name ?? null,
-                    }}
-                  />
+                  key={t.id}
+                  canEdit={canEdit}
+                  canDelete={isAdmin || t.createdById === userId}
+                  members={memberOptions}
+                  task={{
+                    id: t.id,
+                    title: t.title,
+                    description: t.description,
+                    status: t.status,
+                    assigneeId: t.assigneeId,
+                  }}
+                />
                 ))
               )}
             </section>
