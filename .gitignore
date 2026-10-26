@@ -12,7 +12,8 @@
 
 # testing
 /coverage
-*.txt
+cookies.txt
+cookies2.txt
 # next.js
 /.next/
 /out/
