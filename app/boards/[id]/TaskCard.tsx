@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export type TaskCardData = {
   id: string;
@@ -59,7 +60,9 @@ export default function TaskCard({
 
   return (
     <div className="border rounded p-3 bg-white text-gray-900 space-y-2">
-      <p className="font-medium">{task.title}</p>
+      <Link href={`/tasks/${task.id}`} className="font-medium hover:underline">
+        {task.title}
+      </Link>
       {task.description && (
         <p className="text-sm text-gray-600">{task.description}</p>
       )}

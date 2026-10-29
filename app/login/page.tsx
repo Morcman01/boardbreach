@@ -29,6 +29,8 @@ export default function LoginPage() {
       }
 
       router.push("/teams");
+      router.refresh();
+      
     } catch {
       setError("could not reach the server");
     } finally {
